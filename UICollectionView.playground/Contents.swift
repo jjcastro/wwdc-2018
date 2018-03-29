@@ -1,8 +1,10 @@
 import UIKit
 import PlaygroundSupport
 
+// EXTENSIONS
+// ------------------------
+
 public extension UIImage {
-    
     public func breakIntoParts(val: Int) -> [UIImage] {
         var array = [UIImage]()
         if let cgImage = cgImage {
@@ -49,22 +51,31 @@ public extension UIImage {
     }
 }
 
+// MAIN VIEW CONTROLLER
+// ------------------------
 
 class CollectionViewController: UICollectionViewController, UICollectionViewDelegateFlowLayout {
     
+    // Board factor (n=3 means a 3x3 board)
     var n: Int
+    // Width and height of the board (in pixels)
     var size: Int
+    // Board images
     var images: [UIImage]
+    // Position for the "hole" on the board
     var position: Int
     
     required init?(coder aDecoder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
     
-    init(size: Int, images: [UIImage]) {
+    init(n: Int, size: Int, image: UIImage) {
+        self.n = n
         self.size = size
         self.images = []
-        var preshuffle = images
+        
+        let cropped =  image.getCenterSquare()
+        var preshuffle = cropped.breakIntoParts(val: n)
         
         for _ in 0..<preshuffle.count {
             let rand = Int(arc4random_uniform(UInt32(preshuffle.count)))
@@ -72,10 +83,8 @@ class CollectionViewController: UICollectionViewController, UICollectionViewDele
             preshuffle.remove(at: rand)
         }
         
-        self.currentHole = Int(arc4random_uniform(UInt32(self.images.count)))
-        self.images[self.currentHole] = UIImage(color: .black, size: self.images[0].size)!
-        
-        n = Int(sqrt(Double(images.count)))
+        self.position = Int(arc4random_uniform(UInt32(self.images.count)))
+        self.images[self.position] = UIImage(color: .black, size: self.images[0].size)!
         
         let layout = UICollectionViewFlowLayout()
         layout.minimumInteritemSpacing = 0
@@ -86,7 +95,34 @@ class CollectionViewController: UICollectionViewController, UICollectionViewDele
     }
     
     @objc func handleSwipe(gesture: UIGestureRecognizer) {
-        
+        var newPosition = self.position
+        if let swipeGesture = gesture as? UISwipeGestureRecognizer {
+            switch swipeGesture.direction {
+            case UISwipeGestureRecognizerDirection.right:
+                if newPosition % n != 0 {
+                    newPosition -= 1
+                }
+            case UISwipeGestureRecognizerDirection.down:
+                if (newPosition - n) >= 0 {
+                    newPosition -= n
+                }
+            case UISwipeGestureRecognizerDirection.left:
+                if (newPosition + 1) % n != 0 {
+                    newPosition += 1
+                }
+            case UISwipeGestureRecognizerDirection.up:
+                if (newPosition + n) < images.count {
+                    newPosition += n
+                }
+            default:
+                break
+            }
+            self.collectionView?.performBatchUpdates({() -> Void in
+                self.collectionView?.moveItem(at: IndexPath(item: newPosition, section: 0), to: IndexPath(item: self.position, section: 0))
+                self.collectionView?.moveItem(at: IndexPath(item: self.position, section: 0), to: IndexPath(item: newPosition, section: 0))
+            }, completion: nil)
+            self.position = newPosition
+        }
     }
 
     override func viewDidLoad() {
@@ -112,7 +148,6 @@ class CollectionViewController: UICollectionViewController, UICollectionViewDele
     override func viewDidLayoutSubviews() {
         let frame = CGRect(x: 10, y: 10, width: size, height: size)
         collectionView?.frame = frame
-//        collectionView?.center = CGPoint(x: UIScreen.main.bounds.width / CGFloat(2), y:200)
     }
     
     override func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
@@ -126,37 +161,28 @@ class CollectionViewController: UICollectionViewController, UICollectionViewDele
 
     override func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
         let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "PlayCell", for: indexPath)
-        cell.backgroundColor = .green
-        
-//        print(indexPath.section)
-        
-        cell.layer.borderWidth = 1
-        cell.layer.borderColor = UIColor.white.cgColor
         
         let image = self.images[indexPath.item]
-        
         let imageView = UIImageView(frame: CGRect(x: 0, y: 0, width: cell.frame.width, height: cell.frame.height))
         imageView.contentMode = .scaleAspectFill
         imageView.image = image
         
+        cell.layer.zPosition = (indexPath.item == position ? 0 : 1)
         cell.contentView.addSubview(imageView)
         
         return cell
     }
 }
 
-if let img = UIImage(named: "london.jpg") {
-    let cropped =  img.getCenterSquare()
-    let new = cropped.breakIntoParts(val: 4)
-    
-    let thing = CollectionViewController(size: 300, images: new)
-    
-    thing.collectionView?.layer.borderWidth = 2
-    thing.collectionView?.layer.borderColor = UIColor.white.cgColor
-    
-    PlaygroundPage.current.liveView = thing
-    PlaygroundPage.current.needsIndefiniteExecution = true
-    
-}
+// MAIN
+// ------------------------
+
+let thing = CollectionViewController(n: 5, size: 300, image: UIImage(named: "london.jpg")!)
+
+thing.collectionView?.layer.borderWidth = 2
+thing.collectionView?.layer.borderColor = UIColor.white.cgColor
+
+PlaygroundPage.current.liveView = thing
+PlaygroundPage.current.needsIndefiniteExecution = true
 
 
