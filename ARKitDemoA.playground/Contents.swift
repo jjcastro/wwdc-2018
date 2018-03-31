@@ -5,6 +5,26 @@ import ARKit
 import PlaygroundSupport
 import SpriteKit
 
+@IBDesignable class PaddingLabel: UILabel {
+    
+    var topInset: CGFloat = 10.0
+    var bottomInset: CGFloat = 10.0
+    var leftInset: CGFloat = 15.0
+    var rightInset: CGFloat = 15.0
+    
+    override func drawText(in rect: CGRect) {
+        let insets = UIEdgeInsets.init(top: topInset, left: leftInset, bottom: bottomInset, right: rightInset)
+        super.drawText(in: UIEdgeInsetsInsetRect(rect, insets))
+    }
+    
+    override var intrinsicContentSize: CGSize {
+        var intrinsicSuperViewContentSize = super.intrinsicContentSize
+        intrinsicSuperViewContentSize.height += topInset + bottomInset
+        intrinsicSuperViewContentSize.width += leftInset + rightInset
+        return intrinsicSuperViewContentSize
+    }
+}
+
 extension SCNMaterial {
     convenience init(name: String) {
         self.init()
@@ -47,7 +67,7 @@ class Plane: SCNNode {
         plane.geometry = SCNBox(width: width, height: CGFloat(Plane.planeHeight), length: length, chamferRadius: 0)
         
         let material = SCNMaterial()
-        let img = UIImage(named: "dotgrid.png")!
+        let img = UIImage(named: "dots-icon.png")!
         material.diffuse.contents = img
         material.locksAmbientWithDiffuse = true
 
@@ -108,45 +128,107 @@ class Plane: SCNNode {
 
 class QIARViewController : UIViewController, ARSCNViewDelegate, SCNPhysicsContactDelegate {
     var sceneView: ARSCNView!
-    var infoLabel = UILabel()
+    var infoLabel = PaddingLabel()
     
     var planes = [UUID: Plane]()
     var boxes = [SCNNode]()
     
+    let trees = ["Fir_Tree", "Lil_Tree", "Palm_Tree"]
+    var treeCounter = 0
+    
     override func loadView() {
-        sceneView = ARSCNView(frame:CGRect(x: 0.0, y: 0.0, width: 500.0, height: 600.0))
-        sceneView.delegate = self
+        setupScene()
+        setupLights()
+        setupInfoLabel()
+        addBottomPlane()
+        setupGestures()
+
+        let config = ARWorldTrackingConfiguration()
+        config.planeDetection = .horizontal
+        config.isLightEstimationEnabled = true
+        sceneView.session.run(config)
+    }
+    
+    func setupInfoLabel() {
+        infoLabel.text = "Move around to detect the scene 🔍"
         
-        infoLabel.text = "hola"
-        infoLabel.backgroundColor = .red
+        infoLabel.backgroundColor = UIColor(white: 1.0, alpha: 0.5)
+        infoLabel.textAlignment = .center
+        infoLabel.layer.masksToBounds = true
         infoLabel.layer.zPosition = 2
+        infoLabel.layer.cornerRadius = 5.0
         infoLabel.translatesAutoresizingMaskIntoConstraints = false
-        infoLabel.numberOfLines = 3
+        infoLabel.numberOfLines = 2
         
         // Set the view's delegate
         
         sceneView.addSubview(infoLabel)
-        sceneView.addConstraint(NSLayoutConstraint(item: infoLabel, attribute: .bottom, relatedBy: .equal, toItem: sceneView, attribute: .bottom, multiplier: 1, constant: 0))
-        sceneView.addConstraint(NSLayoutConstraint(item: infoLabel, attribute: .leading, relatedBy: .equal, toItem: sceneView, attribute: .leading, multiplier: 1, constant: 0))
+        sceneView.addConstraint(NSLayoutConstraint(item: infoLabel, attribute: .bottom, relatedBy: .equal, toItem: sceneView, attribute: .bottom, multiplier: 1, constant: -100))
+        sceneView.addConstraint(NSLayoutConstraint(item: infoLabel, attribute: .centerX, relatedBy: .equal, toItem: sceneView, attribute: .centerX, multiplier: 1, constant: 0))
+    }
+    
+    func setupScene() {
+        sceneView = ARSCNView(frame:CGRect(x: 0.0, y: 0.0, width: 500.0, height: 600.0))
+        sceneView.delegate = self
         
         sceneView.delegate = self
         // Show statistics such as fps and timing information
-        sceneView.showsStatistics = true
+//        sceneView.showsStatistics = true
         sceneView.autoenablesDefaultLighting = true
+        sceneView.antialiasingMode = .multisampling4X
         
         // Set the scene
-        let scene = SCNScene() //(named: "omg.scn")!
+        let scene = SCNScene(named: "lights.scn")!
         sceneView.scene = scene
         
-        addBottomPlane()
         sceneView.scene.physicsWorld.contactDelegate = self
-
-        let config = ARWorldTrackingConfiguration()
-        config.planeDetection = .horizontal
-        
         self.view = sceneView
-        sceneView.session.run(config)
-
+    }
+    
+    func setupLights() {
+        self.sceneView.autoenablesDefaultLighting = false
+        self.sceneView.automaticallyUpdatesLighting = false
+        
+//        let spotLight = SCNLight()
+//        spotLight.type = .spot
+//        spotLight.spotInnerAngle = 45
+//        spotLight.spotOuterAngle = 45
+//
+//        let ambientLight = SCNLight()
+//        ambientLight.type = .ambient
+//
+//        let spotNode = SCNNode()
+//        spotNode.light = spotLight
+//        spotNode.position = SCNVector3(0, -2, 0)
+//        spotNode.eulerAngles = SCNVector3(-1 * (Float.pi / 2), 0, 0)
+//
+//        let ambientNode = SCNNode()
+//        ambientNode.light = ambientLight
+//
+//        self.sceneView.scene.rootNode.addChildNode(spotNode)
+//        self.sceneView.scene.rootNode.addChildNode(ambientNode)
+        
+//        let image = UIImage(named: "Environment/spherical-old.jpg")!
+//        self.sceneView.scene.lightingEnvironment.contents = image
+        
+    }
+    
+    func renderer(_ renderer: SCNSceneRenderer, updateAtTime time: TimeInterval) {
+        guard let estimate = self.sceneView.session.currentFrame?.lightEstimate else {
+            return
+        }
+        
+        let ambientLight = self.sceneView.scene.rootNode.childNode(withName: "ambient", recursively: false)?.light!
+        let spotLight = self.sceneView.scene.rootNode.childNode(withName: "spot", recursively: false)?.light!
+        
+        ambientLight?.temperature = estimate.ambientColorTemperature
+        spotLight?.temperature = estimate.ambientColorTemperature
+        
+        ambientLight?.intensity = estimate.ambientIntensity
+        spotLight?.intensity = estimate.ambientIntensity
+    }
+    
+    func setupGestures() {
         let tapGesture = UITapGestureRecognizer(target: self, action: #selector(self.handleTap))
         sceneView.addGestureRecognizer(tapGesture)
         
@@ -159,7 +241,7 @@ class QIARViewController : UIViewController, ARSCNViewDelegate, SCNPhysicsContac
     @objc func handleTap(recognizer: UITapGestureRecognizer) {
         let tapPoint = recognizer.location(in: sceneView)
         if let hit = sceneView.hitTest(tapPoint, types: .existingPlaneUsingExtent).first {
-            insertGeometry(hitResult: hit)
+            insertText(hitResult: hit)
         }
     }
     
@@ -195,7 +277,9 @@ class QIARViewController : UIViewController, ARSCNViewDelegate, SCNPhysicsContac
     
     func insertGeometry(hitResult: ARHitTestResult) {
         let dimension = CGFloat(0.1)
-        let cube = SCNBox(width: dimension, height: dimension, length: dimension, chamferRadius: 0)
+        let cube = SCNBox(width: dimension, height: dimension, length: dimension, chamferRadius: 0.01)
+        
+        cube.materials = [SCNMaterial(name: "plastic")]
         let node = SCNNode(geometry: cube)
         
         node.physicsBody = SCNPhysicsBody(type: .dynamic, shape: SCNPhysicsShape(geometry: cube, options: nil))
@@ -213,6 +297,73 @@ class QIARViewController : UIViewController, ARSCNViewDelegate, SCNPhysicsContac
         boxes.append(node)
         sceneView.scene.rootNode.addChildNode(node)
     }
+    
+    func insertText(hitResult: ARHitTestResult) {
+        let subScene = SCNScene(named: "Environment/Text.scn")!
+        
+        subScene.rootNode.position = SCNVector3(
+            hitResult.worldTransform.columns.3.x,
+            hitResult.worldTransform.columns.3.y,
+            hitResult.worldTransform.columns.3.z
+        )
+        
+        let apple = subScene.rootNode.childNode(withName: "apple", recursively: false)!
+        let wwdc = subScene.rootNode.childNode(withName: "wwdc", recursively: false)!
+        let juan = subScene.rootNode.childNode(withName: "juan", recursively: false)!
+        let bogota = subScene.rootNode.childNode(withName: "bogota", recursively: false)!
+        
+        var moveAction = SCNAction.move(by: SCNVector3(0.05, 0, 0), duration: 0.5)
+        var opacityAction = SCNAction.fadeIn(duration: 0.5)
+        var idle = SCNAction.wait(duration: 0.25)
+        
+        var combined = SCNAction.group([moveAction, opacityAction])
+        combined.timingMode = .easeOut
+        
+        sceneView.scene.rootNode.addChildNode(subScene.rootNode)
+        
+        apple.opacity = 0.0
+        wwdc.opacity = 0.0
+        juan.opacity = 0.0
+        bogota.opacity = 0.0
+        
+        apple.runAction(combined)
+        wwdc.runAction(SCNAction.sequence([idle, combined]))
+        juan.runAction(SCNAction.sequence([idle, idle, combined]))
+        bogota.runAction(SCNAction.sequence([idle, idle, idle, combined]))
+    }
+    
+    func insertTree(hitResult: ARHitTestResult) {
+        let treeNum = treeCounter % trees.count
+        let selectedTree = trees[treeNum]
+        
+        let subScene = SCNScene(named: "Environment/\(selectedTree).scn")!
+        
+        subScene.rootNode.position = SCNVector3(
+            hitResult.worldTransform.columns.3.x,
+            hitResult.worldTransform.columns.3.y,
+            hitResult.worldTransform.columns.3.z
+        )
+        subScene.rootNode.scale = SCNVector3(0.01, 0.01, 0.01)
+        
+        let finalRotation = Float.pi * Float(arc4random_uniform(2))
+        let initialRotation = finalRotation - .pi / 2
+        subScene.rootNode.eulerAngles.y = initialRotation
+        
+        let finalScale = 0.5 + (Float(arc4random_uniform(1)) / 2)
+        
+        let animationDuration: Double = 0.5
+        let scale = SCNAction.scale(to: CGFloat(finalScale), duration: animationDuration)
+        let rotate = SCNAction.rotateTo(x: 0, y: CGFloat(finalRotation), z: 0, duration:  animationDuration)
+        
+        let combinedAction = SCNAction.group([scale, rotate])
+        combinedAction.timingMode = .easeOut
+        
+        subScene.rootNode.runAction(combinedAction)
+        
+        sceneView.scene.rootNode.addChildNode(subScene.rootNode)
+        treeCounter += 1
+    }
+
     
     func explode(hitResult: ARHitTestResult) {
         print("exploded")
@@ -259,16 +410,6 @@ class QIARViewController : UIViewController, ARSCNViewDelegate, SCNPhysicsContac
         // Reset tracking and/or remove existing anchors if consistent tracking is required
     }
     
-//    func session(_ session: ARSession, didUpdate frame: ARFrame) {
-//        if let hit = sceneView.hitTest(sceneView.center, types: .featurePoint).first {
-////            sceneView.session.add(anchor: ARAnchor(transform: hit.worldTransform))
-//
-////            sceneView.scene.rootNode.addChildNode(planeNode)
-//            node.simdTransform = hit.worldTransform
-//        }
-//        print("ugh")
-//    }
-    
     func physicsWorld(_ world: SCNPhysicsWorld, didBegin contact: SCNPhysicsContact) {
         let bitmask = contact.nodeA.physicsBody!.categoryBitMask | contact.nodeB.physicsBody!.categoryBitMask
         
@@ -297,9 +438,12 @@ class QIARViewController : UIViewController, ARSCNViewDelegate, SCNPhysicsContac
 
         let plane = Plane.initWithThing(planeAnchor: anchor as! ARPlaneAnchor, hidden: false)
         planes[anchor.identifier] = plane
-        //sceneView.scene.rootNode
+        
+        DispatchQueue.main.async {
+            self.infoLabel.text = "Planes have been detected! 📌\nTap on one to start ✨"
+        }
+        
         node.addChildNode(plane)
-
     }
     
     func renderer(_ renderer: SCNSceneRenderer, didRemove node: SCNNode, for anchor: ARAnchor) {
