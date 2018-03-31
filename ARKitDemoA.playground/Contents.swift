@@ -5,7 +5,25 @@ import ARKit
 import PlaygroundSupport
 import SpriteKit
 
-@IBDesignable class PaddingLabel: UILabel {
+extension SCNGeometry {
+    class func lineFrom(vector vector1: SCNVector3, toVector vector2: SCNVector3) -> SCNGeometry {
+        let indices: [Int32] = [0, 1]
+        
+        let source = SCNGeometrySource(vertices: [vector1, vector2])
+        let element = SCNGeometryElement(indices: indices, primitiveType: .line)
+        
+        return SCNGeometry(sources: [source], elements: [element])
+        
+    }
+}
+
+extension SCNVector3 {
+    func length() -> Float {
+        return sqrtf(x*x + y*y + z*z)
+    }
+}
+
+class PaddingLabel: UILabel {
     
     var topInset: CGFloat = 10.0
     var bottomInset: CGFloat = 10.0
@@ -131,7 +149,7 @@ class QIARViewController : UIViewController, ARSCNViewDelegate, SCNPhysicsContac
     var infoLabel = PaddingLabel()
     
     var planes = [UUID: Plane]()
-    var boxes = [SCNNode]()
+    var addedNodes = [SCNNode]()
     
     let trees = ["Fir_Tree", "Lil_Tree", "Palm_Tree"]
     var treeCounter = 0
@@ -142,6 +160,7 @@ class QIARViewController : UIViewController, ARSCNViewDelegate, SCNPhysicsContac
         setupInfoLabel()
         addBottomPlane()
         setupGestures()
+        
 
         let config = ARWorldTrackingConfiguration()
         config.planeDetection = .horizontal
@@ -258,6 +277,12 @@ class QIARViewController : UIViewController, ARSCNViewDelegate, SCNPhysicsContac
         }
     }
     
+    func fadeNodes() {
+        for node in addedNodes {
+            node.runAction(SCNAction.fadeOut(duration: 0.5))
+        }
+    }
+    
     func addBottomPlane() {
         let bottomPlane = SCNBox(width: 1000, height: 0.5, length: 1000, chamferRadius: 0)
         
@@ -294,11 +319,15 @@ class QIARViewController : UIViewController, ARSCNViewDelegate, SCNPhysicsContac
             hitResult.worldTransform.columns.3.z
         )
 
-        boxes.append(node)
+        addedNodes.append(node)
         sceneView.scene.rootNode.addChildNode(node)
     }
     
     func insertText(hitResult: ARHitTestResult) {
+        guard let currentFrame = sceneView.session.currentFrame else {
+            return
+        }
+        
         let subScene = SCNScene(named: "Environment/Text.scn")!
         
         subScene.rootNode.position = SCNVector3(
@@ -307,10 +336,27 @@ class QIARViewController : UIViewController, ARSCNViewDelegate, SCNPhysicsContac
             hitResult.worldTransform.columns.3.z
         )
         
+        let mat = SCNMatrix4(currentFrame.camera.transform)
+        let dir = SCNVector3(-1 * mat.m31, 0, -1 * mat.m33)
+        
+        let nodenew = SCNNode(geometry: SCNGeometry.lineFrom(vector: SCNVector3(0,0,0), toVector: dir))
+        sceneView.scene.rootNode.addChildNode(nodenew)
+        
+        let dot = (mat.m31 * 0) + (mat.m33 * 1)
+        let det = (mat.m31 * 1) - (mat.m33 * 0)
+        
+        let angle = atan2(det, dot)
+        print(angle)
+        subScene.rootNode.eulerAngles.y = angle
+        
+        
+        
         let apple = subScene.rootNode.childNode(withName: "apple", recursively: false)!
         let wwdc = subScene.rootNode.childNode(withName: "wwdc", recursively: false)!
         let juan = subScene.rootNode.childNode(withName: "juan", recursively: false)!
         let bogota = subScene.rootNode.childNode(withName: "bogota", recursively: false)!
+        
+        
         
         var moveAction = SCNAction.move(by: SCNVector3(0.05, 0, 0), duration: 0.5)
         var opacityAction = SCNAction.fadeIn(duration: 0.5)
@@ -320,6 +366,7 @@ class QIARViewController : UIViewController, ARSCNViewDelegate, SCNPhysicsContac
         combined.timingMode = .easeOut
         
         sceneView.scene.rootNode.addChildNode(subScene.rootNode)
+        addedNodes.append(subScene.rootNode)
         
         apple.opacity = 0.0
         wwdc.opacity = 0.0
@@ -361,6 +408,7 @@ class QIARViewController : UIViewController, ARSCNViewDelegate, SCNPhysicsContac
         subScene.rootNode.runAction(combinedAction)
         
         sceneView.scene.rootNode.addChildNode(subScene.rootNode)
+        addedNodes.append(subScene.rootNode)
         treeCounter += 1
     }
 
@@ -375,7 +423,7 @@ class QIARViewController : UIViewController, ARSCNViewDelegate, SCNPhysicsContac
             hitResult.worldTransform.columns.3.z
         )
         
-        for cubeNode in boxes {
+        for cubeNode in addedNodes {
             
             var distance = SCNVector3(
                 cubeNode.worldPosition.x - position.x,

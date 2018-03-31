@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>Terms</key>
+	<dict>
+		<key>webgl</key>
+		<dict>
+			<key>Definition</key>
+			<string>A low level JavaScript API for interactive 3D graphics.</string>
+			<key>Title</key>
+			<string>WebGL</string>
+		</dict>
+		<key>arkit</key>
+		<dict>
+			<key>Definition</key>
+			<string>Apple&apos;s high-level framework for Augmented Reality. ✨</string>
+			<key>Title</key>
+			<string>ARKit</string>
+		</dict>
+		<key>jardincito</key>
+		<dict>
+			<key>Definition</key>
+			<string>A tiny garden.</string>
+		</dict>
+		<key>bogota</key>
+		<dict>
+			<key>Definition</key>
+			<string>Bogotá is Colombia&apos;s sprawling, high-altitude capital 🇨🇴. Embedded in the middle of the Andes mountain range, Bogotá is the world&apos;s highest megalopolis, at almost 10 000 feet above sea level.</string>
+			<key>Title</key>
+			<string>Bogotá</string>
+		</dict>
+	</dict>
+</dict>
+</plist>

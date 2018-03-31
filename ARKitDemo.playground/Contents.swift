@@ -112,7 +112,7 @@ class QIARViewController : UIViewController, ARSCNViewDelegate, ARSessionDelegat
         let plane = SCNPlane(width: 0.2, height: 0.2)
         node = SCNNode(geometry: plane)
         sceneView.scene.rootNode.addChildNode(node)
-
+        
         let tapGesture = UITapGestureRecognizer(target: self, action: #selector(self.handleTap))
         view.addGestureRecognizer(tapGesture)
     }
