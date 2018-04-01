@@ -9,18 +9,38 @@ public class TextARViewController: ARViewController {
     public var name = "John Appleseed"
     public var location = "Cupertino, CA"
     
+    public var scale: Float = 1.0
+    
+    public var faceCamera = false
+    
     override func insertElement(hitResult: ARHitTestResult) {
-        insertText(hitResult: hitResult)
+        insertText(hitResult: hitResult, faceCamera: faceCamera)
     }
     
-    public func insertText(hitResult: ARHitTestResult) {
+    public func insertText(hitResult: ARHitTestResult, faceCamera: Bool) {
+        self.fadeNodes()
         let subScene = SCNScene(named: "Environment/Text.scn")!
+        
+        guard let currentFrame = sceneView.session.currentFrame else {
+            return
+        }
         
         subScene.rootNode.position = SCNVector3(
             hitResult.worldTransform.columns.3.x,
             hitResult.worldTransform.columns.3.y,
             hitResult.worldTransform.columns.3.z
         )
+        
+        if faceCamera {
+            let mat = SCNMatrix4(currentFrame.camera.transform)
+            let dot = mat.m33
+            let det = mat.m31
+            
+            let angle = atan2(det, dot)
+            subScene.rootNode.eulerAngles.y = angle
+        }
+        
+        subScene.rootNode.scale = SCNVector3(scale, scale, scale)
         
         let apple = subScene.rootNode.childNode(withName: "apple", recursively: false)!
         let wwdc = subScene.rootNode.childNode(withName: "wwdc", recursively: false)!
@@ -33,11 +53,11 @@ public class TextARViewController: ARViewController {
         let bogotaText = bogota.childNodes.first?.geometry as! SCNText
         bogotaText.string = location
         
-        var moveAction = SCNAction.move(by: SCNVector3(0.05, 0, 0), duration: 0.5)
-        var opacityAction = SCNAction.fadeIn(duration: 0.5)
-        var idle = SCNAction.wait(duration: 0.25)
+        let moveAction = SCNAction.move(by: SCNVector3(0.05, 0, 0), duration: 0.5)
+        let opacityAction = SCNAction.fadeIn(duration: 0.5)
+        let idle = SCNAction.wait(duration: 0.25)
         
-        var combined = SCNAction.group([moveAction, opacityAction])
+        let combined = SCNAction.group([moveAction, opacityAction])
         combined.timingMode = .easeOut
         
         sceneView.scene.rootNode.addChildNode(subScene.rootNode)
@@ -52,5 +72,12 @@ public class TextARViewController: ARViewController {
         wwdc.runAction(SCNAction.sequence([idle, combined]))
         juan.runAction(SCNAction.sequence([idle, idle, combined]))
         bogota.runAction(SCNAction.sequence([idle, idle, idle, combined]))
+    }
+    
+    public func scaleNodes(to: Float) {
+        scale = to
+        for node in addedNodes {
+            node.runAction(SCNAction.scale(to: CGFloat(to), duration: 0.5))
+        }
     }
 }

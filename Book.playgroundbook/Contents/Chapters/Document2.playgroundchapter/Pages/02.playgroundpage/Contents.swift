@@ -1,73 +1,45 @@
-//#-hidden-code
-//
-//  Contents.swift
-//
-//  Copyright © 2017 Apple Inc. All rights reserved.
-//
-//#-end-hidden-code
-/*:#localized(key: "FirstProseBlock")
- **Goal:** Play a sound when you detect a plane.
+/*:
+ **Goal:** Rotate and scale our name tag.
  
- The camera sees many different types of features as you move the iPad around, but today you’ll focus on horizontal, flat surfaces called [planes](glossary://plane).
+  You may have noticed that our name tag is always oriented in the same direction, regardless of where we are. This can be awkward, since in some cases we have to move the iPad to read the text. We would rather have the text always be facing us.
  
- Move your iPad around. See how the grid lines move in and out of existence, grow and shrink, or blend together? As the camera looks around the room, it’s noticing new things, just like you do when you turn your head.
+ How can we accomplish this? **With vector algebra!**.
  
- * callout(Tip):
- The camera sometimes has trouble spotting planes in a room with shiny, reflective surfaces or low lighting. If you’re having trouble seeing planes, try pointing the iPad in a different direction.
+ ## 3D space and vector algebra
  
- - Example: A simple `for` loop.\
- This example shows a `for` loop that prints the numbers 1 to 5.\
- \
- `for index in 1...5 {`\
- `   print("index = \(index)")`\
- `}`}
+ Objects are represented in the 3D world of [ARKit](glossary://arkit) in something called a **[vector](glossary://vector) space**. A vector can represent orientation, or location in space. Since all 3D coordinates can be represented in 3 numbers (`length`, `height` and `depth`), our vector will be a group of 3 elements: [`x`, `y`, `z`] respectively.
  
- Each time the camera sees a plane, it triggers the `detectedPlane(plane:)` function, which lets you access the 'Plane' object it found. That function doesn’t do anything yet, but you’re going to change that!
+ - Note:
+ [Vectors](glossary://vector) are used in all scientific and engineering fields, and any other field that uses computers (are there any that don't?)
+ 
+ In this example, our goal is to take our device's orientation [vector](glossary://vector) and make it the same angle as our name tag's (but opposite, so it's facing **us**). To do this, we first have to find the angle at which our iPad is located, and apply a `rotation` to the text.
+ 
+ ![Vector illustration](vector_img.jpg)
+ 
+ Since the text is resting on a plane, we won't take it's height `y` into account. The way to do this, then, is take the inverse tangent (`atan2`) of the remaining two vector elements: `x` and `z`.
+ 
+ ![Angle illustration](angle.jpg)
+ 
+ `let angle = atan2(vector.x, vector.y)`\
+ `nameTag.rotation.y = angle`
  
  **Try this:**
  
- Inside the `detectedPlane(plane)` function body, add code to make a noise when you detect a new plane. Make sure you turn your sound on so you know your code is working!
+ Scaling is another algebra transformation we can apply on a vector space. Set the `scale` to somewhere between 0 and 1.0 and see how the size of the text changes accordingly.
  */
 //#-hidden-code
 import PlaygroundSupport
 import UIKit
 
 let page = PlaygroundPage.current
-page.needsIndefiniteExecution = true
 let proxy = page.liveView as? PlaygroundRemoteLiveViewProxy
-
-//#-code-completion(everything, hide)
-//#-code-completion(identifier, show, playSound(_:), Sound, ., boing, electricity, hat, pop, snare)
-//#-end-hidden-code 
-func detectedPlane(plane: Plane) {
-    //#-copy-source(id1)
-    //#-editable-code Remember to call the playSound(_:) function here!
-    
-    //#-end-editable-code
-    //#-end-copy-source
-    
-    //#-hidden-code
-    // Assessment, called once we detect a plane
-    page.assessmentStatus = assessmentPoint()
-    //#-end-hidden-code
+func setScale(to: Double) {
+    proxy?.send(PlaygroundValue.floatingPoint(to))
 }
 
-//#-hidden-code
-// Handle messages from the live view.
-class Listener: PlaygroundRemoteLiveViewProxyDelegate {
-    func remoteLiveViewProxy(_ remoteLiveViewProxy: PlaygroundRemoteLiveViewProxy,
-                             received message: PlaygroundValue) {
-        guard let liveViewMessage = PlaygroundMessageFromLiveView(playgroundValue: message) else { return }
-        switch liveViewMessage {
-        case .planeFound(let plane):
-            detectedPlane(plane: plane)
-        default:
-            break
-        }
-    }
-    func remoteLiveViewProxyConnectionClosed(_ remoteLiveViewProxy: PlaygroundRemoteLiveViewProxy) { }
-}
-
-let listener = Listener()
-proxy?.delegate = listener
 //#-end-hidden-code
+// Set size
+var scale = /*#-editable-code*/0.8/*#-end-editable-code*/
+setScale(to: scale)
+
+// Tap on "▶️ Run my code" to try it out!

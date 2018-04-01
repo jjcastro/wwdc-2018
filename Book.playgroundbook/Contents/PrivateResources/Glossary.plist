@@ -4,12 +4,15 @@
 <dict>
 	<key>Terms</key>
 	<dict>
-		<key>webgl</key>
+		<key>vector</key>
 		<dict>
 			<key>Definition</key>
-			<string>A low level JavaScript API for interactive 3D graphics.</string>
-			<key>Title</key>
-			<string>WebGL</string>
+			<string>A quantity having direction as well as magnitude, especially as determining the position of one point in space relative to another.</string>
+		</dict>
+		<key>metal</key>
+		<dict>
+			<key>Definition</key>
+			<string>Apple&apos;s low-level API for computer graphics.</string>
 		</dict>
 		<key>arkit</key>
 		<dict>
@@ -26,9 +29,19 @@
 		<key>bogota</key>
 		<dict>
 			<key>Definition</key>
-			<string>Bogotá is Colombia&apos;s sprawling, high-altitude capital 🇨🇴. Embedded in the middle of the Andes mountain range, Bogotá is the world&apos;s highest megalopolis, at almost 10 000 feet above sea level.</string>
+			<string>Bogotá is the capital of Colombia 🇨🇴. Embedded in the middle of the Andes mountain range, Bogotá is the world&apos;s highest megalopolis, at almost 10 000 feet above sea level.</string>
 			<key>Title</key>
 			<string>Bogotá</string>
+		</dict>
+		<key>opengl</key>
+		<dict>
+			<key>Definition</key>
+			<string>A low-level API for rendering interactive 3D vector graphics.</string>
+		</dict>
+		<key>ar</key>
+		<dict>
+			<key>Definition</key>
+			<string>Augmented Reality.</string>
 		</dict>
 	</dict>
 </dict>

@@ -6,6 +6,7 @@
 	<array>
 		<string>Document1.playgroundchapter</string>
 		<string>Document2.playgroundchapter</string>
+		<string>Document3.playgroundchapter</string>
 	</array>
 	<key>ContentIdentifier</key>
 	<string>com.castrovaron.wwdc2018</string>

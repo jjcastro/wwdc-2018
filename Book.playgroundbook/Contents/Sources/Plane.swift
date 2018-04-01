@@ -1,12 +1,6 @@
 import UIKit
 import ARKit
 
-enum CollisionCategory: Int {
-    case bottom = 0b001
-    case cube   = 0b010
-    case plane  = 0b100
-}
-
 class Plane: SCNNode {
     
     static let planeHeight = 0.01
@@ -70,7 +64,7 @@ class Plane: SCNNode {
     }
     
     func setTextureScale() {
-        var geometry = self.geometry as! SCNBox
+        let geometry = self.geometry as! SCNBox
         let width = geometry.width
         let height = geometry.length
         

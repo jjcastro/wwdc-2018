@@ -48,11 +48,6 @@ public class ARViewController: UIViewController, ARSCNViewDelegate, SCNPhysicsCo
     func setupScene() {
         sceneView = ARSCNView(frame:CGRect(x: 0.0, y: 0.0, width: 500.0, height: 600.0))
         sceneView.delegate = self
-        
-        sceneView.delegate = self
-        // Show statistics such as fps and timing information
-        //        sceneView.showsStatistics = true
-        sceneView.autoenablesDefaultLighting = true
         sceneView.antialiasingMode = .multisampling4X
         
         // Set the scene
@@ -65,30 +60,7 @@ public class ARViewController: UIViewController, ARSCNViewDelegate, SCNPhysicsCo
     
     func setupLights() {
         self.sceneView.autoenablesDefaultLighting = false
-        self.sceneView.automaticallyUpdatesLighting = false
-        
-        //        let spotLight = SCNLight()
-        //        spotLight.type = .spot
-        //        spotLight.spotInnerAngle = 45
-        //        spotLight.spotOuterAngle = 45
-        //
-        //        let ambientLight = SCNLight()
-        //        ambientLight.type = .ambient
-        //
-        //        let spotNode = SCNNode()
-        //        spotNode.light = spotLight
-        //        spotNode.position = SCNVector3(0, -2, 0)
-        //        spotNode.eulerAngles = SCNVector3(-1 * (Float.pi / 2), 0, 0)
-        //
-        //        let ambientNode = SCNNode()
-        //        ambientNode.light = ambientLight
-        //
-        //        self.sceneView.scene.rootNode.addChildNode(spotNode)
-        //        self.sceneView.scene.rootNode.addChildNode(ambientNode)
-        
-        //        let image = UIImage(named: "Environment/spherical-old.jpg")!
-        //        self.sceneView.scene.lightingEnvironment.contents = image
-        
+        self.sceneView.automaticallyUpdatesLighting = false        
     }
     
     public func renderer(_ renderer: SCNSceneRenderer, updateAtTime time: TimeInterval) {
@@ -118,6 +90,10 @@ public class ARViewController: UIViewController, ARSCNViewDelegate, SCNPhysicsCo
     
     @objc func handleTap(recognizer: UITapGestureRecognizer) {
         let tapPoint = recognizer.location(in: sceneView)
+        insertAtPoint(tapPoint: tapPoint)
+    }
+    
+    func insertAtPoint(tapPoint: CGPoint) {
         if let hit = sceneView.hitTest(tapPoint, types: .existingPlaneUsingExtent).first {
             insertElement(hitResult: hit)
         }
@@ -148,7 +124,7 @@ public class ARViewController: UIViewController, ARSCNViewDelegate, SCNPhysicsCo
         bottomNode.position = SCNVector3(0, -10, 0)
         bottomNode.physicsBody = SCNPhysicsBody(type: .kinematic, shape: nil)
         bottomNode.physicsBody?.categoryBitMask = CollisionCategory.bottom.rawValue
-        bottomNode.physicsBody?.contactTestBitMask = CollisionCategory.cube.rawValue
+        bottomNode.physicsBody?.contactTestBitMask = CollisionCategory.everything.rawValue
         
         sceneView.scene.rootNode.addChildNode(bottomNode)
     }
@@ -269,7 +245,6 @@ public class ARViewController: UIViewController, ARSCNViewDelegate, SCNPhysicsCo
         
         if bitmask == (CollisionCategory.cube.rawValue | CollisionCategory.bottom.rawValue) {
             print(String(bitmask, radix: 2))
-            //            print(contact.nodeB)
             if (contact.nodeA.physicsBody?.categoryBitMask == CollisionCategory.cube.rawValue) {
                 contact.nodeA.removeFromParentNode()
             } else {

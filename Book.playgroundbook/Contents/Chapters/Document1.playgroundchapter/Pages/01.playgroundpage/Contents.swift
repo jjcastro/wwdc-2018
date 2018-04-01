@@ -1,26 +1,18 @@
-//#-hidden-code
-//
-//  Contents.swift
-//
-//  Copyright © 2017 Apple Inc. All rights reserved.
-//
-//#-end-hidden-code
 /*:
  
  # Let's take a trip
- 
  
  Hi, I'm Juan! 🤓
  
  I'm 20 years old and I'm an aspiring developer and designer from [Bogotá](glossary://bogota).
  
- Lately I've been getting **really** into 3D graphics, specifically [WebGL](glossary://webgl). Today I'm excited to take you on a trip through [ARKit](glossary://arkit) and its capabilities, as seen through the lens of a low-level 3D graphics enthusiast.
+ Lately I've been getting **really** into 3D graphics, specifically [OpenGL](glossary://opengl). So today I'm excited to take you on a trip through [ARKit](glossary://arkit) and its capabilities, as seen through the lens of a low-level 3D graphics enthusiast.
  
- Along the way, we'll be writing in AR ✍🏽, playing some Colombian 🇨🇴 games, and even creating our very own tropical [jardincito](glossary://jardincito) 🌴. But first, *let's start with the basics*.
+ Along the way, we'll be writing [AR](glossary://ar) text ✍🏽, playing some Colombian 🇨🇴 games, and even creating our very own tropical [jardincito](glossary://jardincito) 🌴. But first, *let's start with the basics*.
  
 **Try this:**
  
- Use the `setEmoji(array:_)` function to change the emoji, and tap "Run my code" to run! 👾
+ Use the `setEmoji` function to change the emoji, and tap "Run my code" to run! 👾
 */
 //#-hidden-code
 import PlaygroundSupport

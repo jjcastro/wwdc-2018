@@ -18,7 +18,6 @@ extension TextARViewController: PlaygroundLiveViewMessageHandler {
         
         DispatchQueue.main.async {
             self.fadeNodes()
-            
         }
     }
 }
@@ -26,3 +25,4 @@ extension TextARViewController: PlaygroundLiveViewMessageHandler {
 let page = PlaygroundPage.current
 let liveViewController = TextARViewController()
 page.liveView = liveViewController
+

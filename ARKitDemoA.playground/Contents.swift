@@ -65,9 +65,15 @@ extension SCNMaterial {
 }
 
 enum CollisionCategory: Int {
-    case bottom = 0b001
-    case cube   = 0b010
-    case plane  = 0b100
+    case bottom = 0b00001
+    case cube   = 0b00010
+    case plane  = 0b00100
+    
+    // Tejo
+    case bola =  0b01000
+    case mecha = 0b10000
+    
+    case everything = 0b11110
 }
 
 class Plane: SCNNode {
@@ -141,6 +147,7 @@ class Plane: SCNNode {
         material?.diffuse.contentsTransform = SCNMatrix4MakeScale(Float(width), Float(height), Float(1))
         material?.diffuse.wrapS = .repeat
         material?.diffuse.wrapT = .repeat
+        
     }
 }
 
@@ -155,13 +162,13 @@ class QIARViewController : UIViewController, ARSCNViewDelegate, SCNPhysicsContac
     var treeCounter = 0
     
     override func loadView() {
+        
         setupScene()
         setupLights()
         setupInfoLabel()
         addBottomPlane()
         setupGestures()
         
-
         let config = ARWorldTrackingConfiguration()
         config.planeDetection = .horizontal
         config.isLightEstimationEnabled = true
@@ -191,9 +198,6 @@ class QIARViewController : UIViewController, ARSCNViewDelegate, SCNPhysicsContac
         sceneView.delegate = self
         
         sceneView.delegate = self
-        // Show statistics such as fps and timing information
-//        sceneView.showsStatistics = true
-        sceneView.autoenablesDefaultLighting = true
         sceneView.antialiasingMode = .multisampling4X
         
         // Set the scene
@@ -205,30 +209,11 @@ class QIARViewController : UIViewController, ARSCNViewDelegate, SCNPhysicsContac
     }
     
     func setupLights() {
-        self.sceneView.autoenablesDefaultLighting = false
-        self.sceneView.automaticallyUpdatesLighting = false
+//        self.sceneView.autoenablesDefaultLighting = false
+//        self.sceneView.automaticallyUpdatesLighting = false
         
-//        let spotLight = SCNLight()
-//        spotLight.type = .spot
-//        spotLight.spotInnerAngle = 45
-//        spotLight.spotOuterAngle = 45
-//
-//        let ambientLight = SCNLight()
-//        ambientLight.type = .ambient
-//
-//        let spotNode = SCNNode()
-//        spotNode.light = spotLight
-//        spotNode.position = SCNVector3(0, -2, 0)
-//        spotNode.eulerAngles = SCNVector3(-1 * (Float.pi / 2), 0, 0)
-//
-//        let ambientNode = SCNNode()
-//        ambientNode.light = ambientLight
-//
-//        self.sceneView.scene.rootNode.addChildNode(spotNode)
-//        self.sceneView.scene.rootNode.addChildNode(ambientNode)
-        
-//        let image = UIImage(named: "Environment/spherical-old.jpg")!
-//        self.sceneView.scene.lightingEnvironment.contents = image
+        let image = UIImage(named: "Environment/spherical-old.jpg")!
+        self.sceneView.scene.lightingEnvironment.contents = image
         
     }
     
@@ -237,14 +222,8 @@ class QIARViewController : UIViewController, ARSCNViewDelegate, SCNPhysicsContac
             return
         }
         
-        let ambientLight = self.sceneView.scene.rootNode.childNode(withName: "ambient", recursively: false)?.light!
-        let spotLight = self.sceneView.scene.rootNode.childNode(withName: "spot", recursively: false)?.light!
-        
-        ambientLight?.temperature = estimate.ambientColorTemperature
-        spotLight?.temperature = estimate.ambientColorTemperature
-        
-        ambientLight?.intensity = estimate.ambientIntensity
-        spotLight?.intensity = estimate.ambientIntensity
+//        let intensity = estimate.ambientIntensity / 1000.0
+//        self.sceneView.scene.lightingEnvironment.intensity = intensity
     }
     
     func setupGestures() {
@@ -254,13 +233,32 @@ class QIARViewController : UIViewController, ARSCNViewDelegate, SCNPhysicsContac
         let holdGesture = UILongPressGestureRecognizer(target: self, action: #selector(self.handleLongPress))
         holdGesture.minimumPressDuration = 0.5
         sceneView.addGestureRecognizer(holdGesture)
+        
+        let panGesture = UIPanGestureRecognizer(target: self, action: #selector(self.handlePanGesture))
+        sceneView.addGestureRecognizer(panGesture)
     }
     
     
     @objc func handleTap(recognizer: UITapGestureRecognizer) {
         let tapPoint = recognizer.location(in: sceneView)
-        if let hit = sceneView.hitTest(tapPoint, types: .existingPlaneUsingExtent).first {
-            insertText(hitResult: hit)
+        insertAtPoint(tapPoint: tapPoint)
+    }
+    
+    var startLocation: CGPoint = CGPoint()
+    
+    @objc func handlePanGesture(recognizer: UIPanGestureRecognizer) {
+        if recognizer.state == .began {
+            startLocation = recognizer.location(in: self.view)
+        }
+        else if recognizer.state == .ended {
+            let stopLocation = recognizer.location(in: self.view)
+            let dx = stopLocation.x - startLocation.x
+            let dy = stopLocation.y - startLocation.y
+            let distance = sqrt(dx*dx + dy*dy)
+            
+            if dy < 1 && distance > 80 {
+                throwBall(distance: Float(distance))
+            }
         }
     }
     
@@ -295,7 +293,7 @@ class QIARViewController : UIViewController, ARSCNViewDelegate, SCNPhysicsContac
         bottomNode.position = SCNVector3(0, -10, 0)
         bottomNode.physicsBody = SCNPhysicsBody(type: .kinematic, shape: nil)
         bottomNode.physicsBody?.categoryBitMask = CollisionCategory.bottom.rawValue
-        bottomNode.physicsBody?.contactTestBitMask = CollisionCategory.cube.rawValue
+        bottomNode.physicsBody?.contactTestBitMask = CollisionCategory.everything.rawValue
         
         sceneView.scene.rootNode.addChildNode(bottomNode)
     }
@@ -309,7 +307,7 @@ class QIARViewController : UIViewController, ARSCNViewDelegate, SCNPhysicsContac
         
         node.physicsBody = SCNPhysicsBody(type: .dynamic, shape: SCNPhysicsShape(geometry: cube, options: nil))
         node.physicsBody?.mass = 2.0
-        node.physicsBody?.categoryBitMask = CollisionCategory.cube.rawValue
+        node.physicsBody?.categoryBitMask = CollisionCategory.bola.rawValue
         node.physicsBody?.contactTestBitMask = 0
         
         let insertionYOffset = Float(0.5)
@@ -342,8 +340,8 @@ class QIARViewController : UIViewController, ARSCNViewDelegate, SCNPhysicsContac
         let nodenew = SCNNode(geometry: SCNGeometry.lineFrom(vector: SCNVector3(0,0,0), toVector: dir))
         sceneView.scene.rootNode.addChildNode(nodenew)
         
-        let dot = (mat.m31 * 0) + (mat.m33 * 1)
-        let det = (mat.m31 * 1) - (mat.m33 * 0)
+        let dot = mat.m33
+        let det = mat.m31
         
         let angle = atan2(det, dot)
         print(angle)
@@ -458,17 +456,20 @@ class QIARViewController : UIViewController, ARSCNViewDelegate, SCNPhysicsContac
         // Reset tracking and/or remove existing anchors if consistent tracking is required
     }
     
-    func physicsWorld(_ world: SCNPhysicsWorld, didBegin contact: SCNPhysicsContact) {
+    public func physicsWorld(_ world: SCNPhysicsWorld, didBegin contact: SCNPhysicsContact) {
+        print("called")
         let bitmask = contact.nodeA.physicsBody!.categoryBitMask | contact.nodeB.physicsBody!.categoryBitMask
         
-        if bitmask == (CollisionCategory.cube.rawValue | CollisionCategory.bottom.rawValue) {
-            print(String(bitmask, radix: 2))
-//            print(contact.nodeB)
-            if (contact.nodeA.physicsBody?.categoryBitMask == CollisionCategory.cube.rawValue) {
+        if bitmask == (CollisionCategory.bola.rawValue | CollisionCategory.bottom.rawValue) {
+            if (contact.nodeA.physicsBody?.categoryBitMask == CollisionCategory.bola.rawValue) {
                 contact.nodeA.removeFromParentNode()
             } else {
                 contact.nodeB.removeFromParentNode()
             }
+        }
+        
+        if bitmask == (CollisionCategory.bola.rawValue | CollisionCategory.mecha.rawValue) {
+            infoLabel.text = "omg"
         }
     }
     
@@ -496,6 +497,95 @@ class QIARViewController : UIViewController, ARSCNViewDelegate, SCNPhysicsContac
     
     func renderer(_ renderer: SCNSceneRenderer, didRemove node: SCNNode, for anchor: ARAnchor) {
         planes.removeValue(forKey: anchor.identifier)
+    }
+    
+    var insertedCancha = false
+    
+    func insertAtPoint(tapPoint: CGPoint) {
+        if !insertedCancha {
+            if let hit = sceneView.hitTest(tapPoint, types: .existingPlaneUsingExtent).first {
+                insertTejo(hitResult: hit)
+                insertedCancha = true
+            }
+        }
+    }
+    
+    func newBola() -> SCNNode {
+        let bola = SCNSphere(radius: 0.03)
+        let bolaNode = SCNNode(geometry: bola)
+        
+        bolaNode.physicsBody = SCNPhysicsBody(type: .dynamic, shape: SCNPhysicsShape(geometry: bola, options: nil))
+        bolaNode.physicsBody?.contactTestBitMask = CollisionCategory.mecha.rawValue
+        bolaNode.physicsBody?.categoryBitMask = CollisionCategory.bola.rawValue
+        bolaNode.physicsBody?.collisionBitMask = CollisionCategory.everything.rawValue
+        
+        return bolaNode
+    }
+    
+    func throwBall(distance: Float) {
+        guard let currentFrame = sceneView.session.currentFrame else {
+            return
+        }
+        
+        let bolaNode = newBola()
+        sceneView.scene.rootNode.addChildNode(bolaNode)
+        
+        var translation = matrix_identity_float4x4
+        translation.columns.3.z = -0.5
+        bolaNode.simdTransform = matrix_multiply(currentFrame.camera.transform, translation)
+        
+        let mat = SCNMatrix4(currentFrame.camera.transform)
+        
+        let force = SCNVector3(
+            -1 * mat.m31 * (distance/100.0),
+            mat.m31 + (distance/150.0),
+            -1 * mat.m33 * (distance/100.0))
+        
+        bolaNode.physicsBody?.applyForce(force, asImpulse: true)
+    }
+    
+    public func insertTejo(hitResult: ARHitTestResult) {
+        self.fadeNodes()
+        
+        let subScene = SCNScene(named: "Environment/tejo.scn")!
+        
+        guard let currentFrame = sceneView.session.currentFrame else {
+            return
+        }
+        
+        subScene.rootNode.position = SCNVector3(
+            hitResult.worldTransform.columns.3.x,
+            hitResult.worldTransform.columns.3.y,
+            hitResult.worldTransform.columns.3.z
+        )
+        
+        let mat = SCNMatrix4(currentFrame.camera.transform)
+        let dot = mat.m33
+        let det = mat.m31
+        let angle = atan2(det, dot)
+        
+        subScene.rootNode.scale = SCNVector3(0.01, 0.01, 0.01)
+        
+        // Animate the trees
+        
+        let finalRotation = angle
+        let initialRotation = finalRotation - .pi / 2
+        subScene.rootNode.eulerAngles.y = initialRotation
+        
+        let animationDuration: Double = 0.5
+        let scale = SCNAction.scale(to: CGFloat(1.0), duration: animationDuration)
+        let rotate = SCNAction.rotateTo(x: 0, y: CGFloat(finalRotation), z: 0, duration:  animationDuration)
+        
+        subScene.rootNode.runAction(SCNAction.group([scale,rotate]))
+        sceneView.scene.rootNode.addChildNode(subScene.rootNode)
+        
+        // setUpCollisions
+        let tube = sceneView.scene.rootNode.childNode(withName: "tube-top", recursively: true)!
+        let particles = tube.childNode(withName: "particles", recursively: true)!
+        particles.isHidden = true
+        tube.physicsBody?.contactTestBitMask = CollisionCategory.bola.rawValue
+        tube.physicsBody?.categoryBitMask = CollisionCategory.mecha.rawValue
+        tube.physicsBody?.collisionBitMask = CollisionCategory.everything.rawValue
     }
 }
 

@@ -124,6 +124,8 @@ class QIARViewController : UIViewController, ARSCNViewDelegate, ARSessionDelegat
         
         let sphere = SCNSphere(radius: 0.05)
         
+        self.sceneView.scene.lightingEnvironment.intensity = 0.5
+        
         let sphereNode = SCNNode(geometry: sphere)
         sphereNode.physicsBody = SCNPhysicsBody(type: .dynamic, shape: SCNPhysicsShape(geometry: sphere, options:nil))
         sceneView.scene.rootNode.addChildNode(sphereNode)
