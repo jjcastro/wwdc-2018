@@ -502,11 +502,9 @@ class QIARViewController : UIViewController, ARSCNViewDelegate, SCNPhysicsContac
     var insertedCancha = false
     
     func insertAtPoint(tapPoint: CGPoint) {
-        if !insertedCancha {
-            if let hit = sceneView.hitTest(tapPoint, types: .existingPlaneUsingExtent).first {
-                insertTejo(hitResult: hit)
-                insertedCancha = true
-            }
+        if let hit = sceneView.hitTest(tapPoint, types: .existingPlaneUsingExtent).first {
+            insertTejo(hitResult: hit)
+            insertedCancha = true
         }
     }
     
@@ -517,7 +515,7 @@ class QIARViewController : UIViewController, ARSCNViewDelegate, SCNPhysicsContac
         bolaNode.physicsBody = SCNPhysicsBody(type: .dynamic, shape: SCNPhysicsShape(geometry: bola, options: nil))
         bolaNode.physicsBody?.contactTestBitMask = CollisionCategory.mecha.rawValue
         bolaNode.physicsBody?.categoryBitMask = CollisionCategory.bola.rawValue
-        bolaNode.physicsBody?.collisionBitMask = CollisionCategory.everything.rawValue
+//        bolaNode.physicsBody?.collisionBitMask = CollisionCategory.everything.rawValue
         
         return bolaNode
     }
@@ -579,13 +577,16 @@ class QIARViewController : UIViewController, ARSCNViewDelegate, SCNPhysicsContac
         subScene.rootNode.runAction(SCNAction.group([scale,rotate]))
         sceneView.scene.rootNode.addChildNode(subScene.rootNode)
         
-        // setUpCollisions
         let tube = sceneView.scene.rootNode.childNode(withName: "tube-top", recursively: true)!
         let particles = tube.childNode(withName: "particles", recursively: true)!
+        
         particles.isHidden = true
-        tube.physicsBody?.contactTestBitMask = CollisionCategory.bola.rawValue
-        tube.physicsBody?.categoryBitMask = CollisionCategory.mecha.rawValue
-        tube.physicsBody?.collisionBitMask = CollisionCategory.everything.rawValue
+        
+        let body = SCNPhysicsBody(type: .kinematic, shape: nil)
+        body.contactTestBitMask = CollisionCategory.bola.rawValue
+        body.categoryBitMask = CollisionCategory.mecha.rawValue
+        
+        tube.physicsBody = body
     }
 }
 
