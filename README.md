@@ -1,4 +1,4 @@
- # Thanks for checking out my Playground!**
+# WWDC 2018 Scholarship
  
 I'm **Juan José Castro Varón**, from Bogotá, Colombia. I'm a student at Uniandes and I also have a blog about interactive 3D graphics if you wanna check it out, at **medium.com/@josecastrovaron** 🌴
 
