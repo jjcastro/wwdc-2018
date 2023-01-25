@@ -1,4 +1,4 @@
-# WWDC 2018 Scholarship
+# WWDC 2018 Scholarship [ACCEPTED]
  
 Swift Playground Book with a series of augmented reality interactive experiments explaining AR graphics concepts such as vector algebra, plane detection and hit testing.
 
