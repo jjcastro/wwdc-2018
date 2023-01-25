@@ -1,6 +1,14 @@
 # WWDC 2018 Scholarship
  
-I'm **Juan José Castro Varón**, from Bogotá, Colombia. I'm a student at Uniandes and I also have a blog about interactive 3D graphics if you wanna check it out, at **medium.com/@josecastrovaron** 🌴
+Swift Playground Book with a series of augmented reality interactive experiments explaining AR graphics concepts such as vector algebra, plane detection and hit testing.
+
+The book also features a AR implementation of Tejo, Colombia's national sport.
+
+![IMG_0454](https://user-images.githubusercontent.com/9254507/214531194-754e0342-260a-47d6-8ad1-8d74c903211a.jpg)
+
+---
+ 
+I'm **Juan José Castro Varón**, from Bogotá, Colombia. I also have a blog about interactive 3D graphics if you wanna check it out, at **medium.com/@josecastrovaron** 🌴
 
 Here's a personal thank you to the people who made this possible:
 
